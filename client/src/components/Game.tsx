@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import GameCanvas from "./GameCanvas";
 import GameUI from "./GameUI";
+import ShopModal from "./ShopModal";
 import { GameEngine } from "../lib/game/GameEngine";
+import { Shop } from "../lib/game/Shop";
 import { useGame } from "../lib/stores/useGame";
 import { useAudio } from "../lib/stores/useAudio";
 
@@ -16,6 +18,8 @@ const Game = () => {
     level: 1
   });
   const [activePowerUps, setActivePowerUps] = useState<string[]>([]);
+  const [shop] = useState(() => new Shop());
+  const [isShopOpen, setIsShopOpen] = useState(false);
 
   useEffect(() => {
     if (canvasRef.current && !gameEngineRef.current) {
@@ -74,6 +78,25 @@ const Game = () => {
     toggleMute();
   };
 
+  const handleOpenShop = () => {
+    setIsShopOpen(true);
+  };
+
+  const handleCloseShop = () => {
+    setIsShopOpen(false);
+  };
+
+  const handlePurchase = (hatId: string) => {
+    // Refresh UI to show new purchase
+    setIsShopOpen(false);
+    setTimeout(() => setIsShopOpen(true), 100);
+  };
+
+  const handleEquip = (hatId: string) => {
+    // Apply hat effects to game engine if needed
+    console.log(`Hat equipped: ${hatId}`);
+  };
+
   return (
     <div style={{ 
       width: '100vw', 
@@ -93,6 +116,15 @@ const Game = () => {
         onToggleMute={handleToggleMute}
         isMuted={isMuted}
         activePowerUps={activePowerUps}
+        onOpenShop={handleOpenShop}
+        totalCoins={shop.getState().totalCoins}
+      />
+      <ShopModal
+        isOpen={isShopOpen}
+        onClose={handleCloseShop}
+        shop={shop}
+        onPurchase={handlePurchase}
+        onEquip={handleEquip}
       />
     </div>
   );

@@ -106,25 +106,54 @@ const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMute
           <h1 style={{ fontSize: '48px', margin: '0 0 20px 0', textShadow: '3px 3px 6px rgba(255,255,255,0.8)' }}>
             2D PLATFORMER
           </h1>
-          <p style={{ fontSize: '18px', margin: '0 0 30px 0' }}>
+          <p style={{ fontSize: '18px', margin: '0 0 20px 0' }}>
             Use WASD or Arrow Keys to move and jump!
           </p>
-          <button
-            onClick={onStartGame}
-            style={{
-              background: '#F39C12',
-              color: 'white',
-              border: 'none',
-              padding: '15px 30px',
-              fontSize: '20px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontFamily: 'Courier New, monospace',
-              boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
-            }}
-          >
-            START GAME
-          </button>
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)',
+            padding: '10px',
+            borderRadius: '8px',
+            margin: '0 0 30px 0',
+            border: '2px solid #333'
+          }}>
+            💰 Total Coins: {totalCoins}
+          </div>
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <button
+              onClick={onStartGame}
+              style={{
+                background: '#F39C12',
+                color: 'white',
+                border: 'none',
+                padding: '15px 30px',
+                fontSize: '20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontFamily: 'Courier New, monospace',
+                boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
+              }}
+            >
+              START GAME
+            </button>
+            {onOpenShop && (
+              <button
+                onClick={onOpenShop}
+                style={{
+                  background: '#4A90E2',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 30px',
+                  fontSize: '20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontFamily: 'Courier New, monospace',
+                  boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
+                }}
+              >
+                🎩 SHOP
+              </button>
+            )}
+          </div>
         </div>
       )}
 

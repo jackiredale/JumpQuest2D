@@ -5,6 +5,7 @@ import { Collectible } from './Collectible';
 import { Enemy } from './Enemy';
 import { PowerUp } from './PowerUp';
 import { LevelManager } from './LevelManager';
+import { Shop } from './Shop';
 import { InputManager } from './Input';
 import { Physics } from './Physics';
 
@@ -20,6 +21,7 @@ export class GameEngine {
   private enemies: Enemy[];
   private powerUps: PowerUp[];
   private levelManager: LevelManager;
+  private shop: Shop;
   private inputManager: InputManager;
   
   private isRunning: boolean = false;
@@ -44,6 +46,7 @@ export class GameEngine {
     
     // Initialize game objects
     this.levelManager = new LevelManager();
+    this.shop = new Shop();
     this.player = new Player(this.spawnPoint.x, this.spawnPoint.y, this.config);
     this.platforms = [];
     this.collectibles = [];
@@ -201,9 +204,14 @@ export class GameEngine {
         const collectibleRect = collectible.getRect();
         if (Physics.checkAABBCollision(playerRect, collectibleRect)) {
           collectible.collect();
+          const coinValue = 25; // Base coin value
+          const multiplier = this.shop.getCoinMultiplier();
+          const coinsEarned = coinValue * multiplier;
+          
           this.score += 100;
+          this.shop.addCoins(coinsEarned);
           this.callbacks.onScoreChange(this.score);
-          console.log("Collectible collected!");
+          console.log(`Collectible collected! Earned ${coinsEarned} coins`);
         }
         collectible.update(deltaTime);
       }
