@@ -44,6 +44,10 @@ export class InputManager {
     return this.isKeyPressed('KeyW') || this.isKeyPressed('ArrowUp') || this.isKeyPressed('Space');
   }
 
+  isDashPressed(): boolean {
+    return this.isKeyPressed('ShiftLeft') || this.isKeyPressed('ShiftRight') || this.isKeyPressed('KeyX');
+  }
+
   destroy() {
     // Remove event listeners if needed
     this.keys.clear();

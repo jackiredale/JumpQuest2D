@@ -11,7 +11,7 @@ const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameEngineRef = useRef<GameEngine | null>(null);
   const { phase, start, restart } = useGame();
-  const { backgroundMusic, toggleMute, isMuted } = useAudio();
+  const { backgroundMusic, toggleMute, isMuted, playHit, playSuccess, playPowerUp, playEnemyDestroy, playLevelComplete } = useAudio();
   const [gameStats, setGameStats] = useState({
     score: 0,
     lives: 3,
@@ -20,6 +20,7 @@ const Game = () => {
   const [activePowerUps, setActivePowerUps] = useState<string[]>([]);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [shopCoins, setShopCoins] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
     if (canvasRef.current && !gameEngineRef.current) {
@@ -29,7 +30,12 @@ const Game = () => {
         onLevelChange: (level: number) => setGameStats(prev => ({ ...prev, level })),
         onGameStart: start,
         onGameEnd: () => {},
-        onGameRestart: restart
+        onGameRestart: restart,
+        onCoinCollected: () => playSuccess(),
+        onPowerUpCollected: () => playPowerUp(),
+        onEnemyDefeated: () => playEnemyDestroy(),
+        onPlayerHurt: () => playHit(),
+        onLevelComplete: () => playLevelComplete()
       });
     }
 
@@ -38,9 +44,9 @@ const Game = () => {
         gameEngineRef.current.destroy();
       }
     };
-  }, [start, restart]);
+  }, [start, restart, playSuccess, playPowerUp, playEnemyDestroy, playHit, playLevelComplete]);
 
-  // Poll for active power-ups and shop coins
+  // Poll for game state updates
   useEffect(() => {
     const interval = setInterval(() => {
       if (gameEngineRef.current) {
@@ -49,6 +55,9 @@ const Game = () => {
         
         const shop = gameEngineRef.current.getShop();
         setShopCoins(shop.getState().totalCoins);
+        
+        const timeLeft = gameEngineRef.current.getTimeRemaining();
+        setTimeRemaining(timeLeft);
       }
     }, 100); // Update every 100ms
 
@@ -74,6 +83,7 @@ const Game = () => {
     if (gameEngineRef.current) {
       gameEngineRef.current.restartGame();
       setGameStats({ score: 0, lives: 3, level: 1 });
+      setTimeRemaining(0);
     }
   };
 
@@ -108,7 +118,8 @@ const Game = () => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      background: '#87CEEB'
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      overflow: 'hidden'
     }}>
       <GameCanvas ref={canvasRef} />
       <GameUI 
@@ -121,6 +132,7 @@ const Game = () => {
         activePowerUps={activePowerUps}
         onOpenShop={handleOpenShop}
         totalCoins={shopCoins}
+        timeRemaining={timeRemaining}
       />
       {gameEngineRef.current && (
         <ShopModal
