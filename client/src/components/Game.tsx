@@ -18,8 +18,8 @@ const Game = () => {
     level: 1
   });
   const [activePowerUps, setActivePowerUps] = useState<string[]>([]);
-  const [shop] = useState(() => new Shop());
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [shopCoins, setShopCoins] = useState(0);
 
   useEffect(() => {
     if (canvasRef.current && !gameEngineRef.current) {
@@ -40,12 +40,15 @@ const Game = () => {
     };
   }, [start, restart]);
 
-  // Poll for active power-ups
+  // Poll for active power-ups and shop coins
   useEffect(() => {
     const interval = setInterval(() => {
-      if (gameEngineRef.current && phase === "playing") {
+      if (gameEngineRef.current) {
         const powerUps = gameEngineRef.current.getPlayerActivePowerUps();
         setActivePowerUps(powerUps);
+        
+        const shop = gameEngineRef.current.getShop();
+        setShopCoins(shop.getState().totalCoins);
       }
     }, 100); // Update every 100ms
 
@@ -117,15 +120,17 @@ const Game = () => {
         isMuted={isMuted}
         activePowerUps={activePowerUps}
         onOpenShop={handleOpenShop}
-        totalCoins={shop.getState().totalCoins}
+        totalCoins={shopCoins}
       />
-      <ShopModal
-        isOpen={isShopOpen}
-        onClose={handleCloseShop}
-        shop={shop}
-        onPurchase={handlePurchase}
-        onEquip={handleEquip}
-      />
+      {gameEngineRef.current && (
+        <ShopModal
+          isOpen={isShopOpen}
+          onClose={handleCloseShop}
+          shop={gameEngineRef.current.getShop()}
+          onPurchase={handlePurchase}
+          onEquip={handleEquip}
+        />
+      )}
     </div>
   );
 };

@@ -314,6 +314,10 @@ export class GameEngine {
     return this.player.getActivePowerUps();
   }
 
+  public getShop(): Shop {
+    return this.shop;
+  }
+
   public destroy() {
     this.isRunning = false;
     this.inputManager.destroy();
