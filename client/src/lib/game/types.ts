@@ -42,6 +42,9 @@ export interface PlayerState {
   onGround: boolean;
   facing: 'left' | 'right';
   lives: number;
+  activePowerUps: Map<string, { endTime: number; type: string }>;
+  canDoubleJump: boolean;
+  hasDoubleJumped: boolean;
 }
 
 export interface PlatformData {

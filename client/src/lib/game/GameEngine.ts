@@ -2,6 +2,9 @@ import { GameConfig, GameCallbacks } from './types';
 import { Player } from './Player';
 import { Platform } from './Platform';
 import { Collectible } from './Collectible';
+import { Enemy } from './Enemy';
+import { PowerUp } from './PowerUp';
+import { LevelManager } from './LevelManager';
 import { InputManager } from './Input';
 import { Physics } from './Physics';
 
@@ -14,6 +17,9 @@ export class GameEngine {
   private player: Player;
   private platforms: Platform[];
   private collectibles: Collectible[];
+  private enemies: Enemy[];
+  private powerUps: PowerUp[];
+  private levelManager: LevelManager;
   private inputManager: InputManager;
   
   private isRunning: boolean = false;
