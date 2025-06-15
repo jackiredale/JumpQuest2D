@@ -114,7 +114,19 @@ export class GameEngine {
   public startGame() {
     console.log("Starting game");
     this.isRunning = true;
+
+    this.player.reset(this.spawnPoint.x, this.spawnPoint.y);
+
+    const equippedHat = this.shop.getEquippedHat();
+    if (equippedHat) {
+      this.player.setEquippedHatEffect(equippedHat.effect);
+    } else {
+      this.player.setEquippedHatEffect(null);
+    }
+    this.callbacks.onLifeChange(this.player.state.lives);
+
     this.callbacks.onGameStart();
+    this.levelStartTime = Date.now();
     this.gameLoop(0);
   }
 
@@ -123,15 +135,32 @@ export class GameEngine {
     this.isRunning = false;
     this.score = 0;
     this.levelManager.resetToLevel(1);
+
     this.player.reset(this.spawnPoint.x, this.spawnPoint.y);
     this.camera = { x: 0, y: 0 };
     
     this.initializeLevel();
+
+    const equippedHat = this.shop.getEquippedHat();
+    if (equippedHat) {
+      this.player.setEquippedHatEffect(equippedHat.effect);
+    } else {
+      this.player.setEquippedHatEffect(null);
+    }
     
     this.callbacks.onScoreChange(this.score);
     this.callbacks.onLifeChange(this.player.state.lives);
     this.callbacks.onLevelChange(this.level);
     this.callbacks.onGameRestart();
+  }
+
+  public updateEquippedHat(hatEffect: { type: 'speed' | 'jump' | 'lives' | 'coins'; multiplier: number } | null) {
+    const oldLives = this.player.state.lives;
+    this.player.setEquippedHatEffect(hatEffect);
+
+    if (this.player.state.lives !== oldLives) {
+      this.callbacks.onLifeChange(this.player.state.lives);
+    }
   }
 
   private gameLoop = (currentTime: number) => {

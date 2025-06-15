@@ -29,7 +29,8 @@ export class Player {
       wallJumpCooldown: 0,
       canWallJump: false,
       onWall: false,
-      wallDirection: 0
+      wallDirection: 0,
+      equippedHatEffect: null,
     };
     this.config = config;
   }
@@ -112,6 +113,24 @@ export class Player {
     // Reset ground and wall states (will be set by collision detection)
     this.state.onGround = false;
     this.state.onWall = false;
+  }
+
+  public setEquippedHatEffect(effect: { type: 'speed' | 'jump' | 'lives' | 'coins'; multiplier: number } | null) {
+    const previousEffect = this.state.equippedHatEffect;
+
+    // Remove previous hat's lives bonus if it was a 'lives' hat
+    if (previousEffect && previousEffect.type === 'lives') {
+      this.state.lives -= previousEffect.multiplier;
+    }
+
+    this.state.equippedHatEffect = effect; // Set the new effect
+
+    // Add new hat's lives bonus if it is a 'lives' hat
+    if (effect && effect.type === 'lives') {
+      this.state.lives += effect.multiplier;
+    }
+
+    this.state.lives = Math.max(0, this.state.lives);
   }
 
   private handleMovement(deltaTime: number, leftPressed: boolean, rightPressed: boolean, jumpPressed: boolean) {
@@ -225,7 +244,10 @@ export class Player {
   private getModifiedMoveSpeed(): number {
     let speed = this.config.moveSpeed;
     if (this.state.activePowerUps.has('speed')) {
-      speed *= 1.5;
+      speed *= 1.5; // Power-up multiplier
+    }
+    if (this.state.equippedHatEffect && this.state.equippedHatEffect.type === 'speed') {
+      speed *= this.state.equippedHatEffect.multiplier; // Hat multiplier
     }
     return speed;
   }
@@ -233,7 +255,10 @@ export class Player {
   private getModifiedJumpForce(): number {
     let jumpForce = this.config.jumpForce;
     if (this.state.activePowerUps.has('jump')) {
-      jumpForce *= 1.3;
+      jumpForce *= 1.3; // Power-up multiplier
+    }
+    if (this.state.equippedHatEffect && this.state.equippedHatEffect.type === 'jump') {
+      jumpForce *= this.state.equippedHatEffect.multiplier; // Hat multiplier
     }
     return jumpForce;
   }
@@ -292,7 +317,9 @@ export class Player {
     this.state.velocity = { x: 0, y: 0 };
     this.state.onGround = false;
     this.state.facing = 'right';
-    this.state.lives = 3;
+
+    this.state.lives = 3; // Always reset to base lives first. Hat effect will be applied by GameEngine.
+
     this.state.activePowerUps.clear();
     this.state.canDoubleJump = false;
     this.state.hasDoubleJumped = false;
@@ -306,6 +333,7 @@ export class Player {
     this.previousJumpPressed = false;
     this.previousDashPressed = false;
     this.dustParticles = [];
+    // Note: this.state.equippedHatEffect is NOT reset here as it's managed by GameEngine / persisted.
   }
 
   render(ctx: CanvasRenderingContext2D) {

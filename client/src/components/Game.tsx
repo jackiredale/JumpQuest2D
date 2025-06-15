@@ -106,9 +106,33 @@ const Game = () => {
   };
 
   const handleEquip = (hatId: string) => {
-    // Apply hat effects to game engine if needed
-    console.log(`Hat equipped: ${hatId}`);
-  };
+      if (gameEngineRef.current) {
+        const shop = gameEngineRef.current.getShop();
+        const previouslyEquippedHat = shop.getEquippedHat();
+
+        // If the hat being clicked is already equipped, unequip it.
+        // Otherwise, equip the new hat.
+        if (previouslyEquippedHat && previouslyEquippedHat.id === hatId) {
+          shop.unequipHat();
+          gameEngineRef.current.updateEquippedHat(null);
+          console.log(`Hat unequipped: ${hatId}`);
+        } else {
+          const success = shop.equipHat(hatId);
+          if (success) {
+            const newEquippedHat = shop.getEquippedHat();
+            gameEngineRef.current.updateEquippedHat(newEquippedHat ? newEquippedHat.effect : null);
+            console.log(`Hat equipped: ${hatId}`);
+          } else {
+            console.log(`Failed to equip hat: ${hatId}`);
+          }
+        }
+
+        // Refresh shop modal to reflect equip status changes
+        // This causes a quick close and reopen to force a re-render of the modal's content
+        setIsShopOpen(false);
+        setTimeout(() => setIsShopOpen(true), 10);
+      }
+    };
 
   return (
     <div style={{ 
