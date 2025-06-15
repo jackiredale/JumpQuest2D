@@ -4,6 +4,7 @@ import { Physics } from './Physics';
 export class Player {
   public state: PlayerState;
   private config: GameConfig;
+  private previousJumpPressed: boolean = false;
 
   constructor(x: number, y: number, config: GameConfig) {
     this.state = {
@@ -40,17 +41,23 @@ export class Player {
       this.state.velocity = Physics.applyFriction(this.state.velocity, this.config.friction, deltaTime);
     }
 
-    // Handle jumping
-    if (jumpPressed) {
+    // Handle jumping with improved double jump detection
+    const wasJumpPressed = this.previousJumpPressed || false;
+    const isJumpJustPressed = jumpPressed && !wasJumpPressed;
+    this.previousJumpPressed = jumpPressed;
+    
+    if (isJumpJustPressed) {
       if (this.state.onGround) {
         // Regular jump
         this.state.velocity.y = -jumpForce;
         this.state.onGround = false;
         this.state.hasDoubleJumped = false;
+        console.log("Regular jump!");
       } else if (this.state.canDoubleJump && !this.state.hasDoubleJumped && !this.state.onGround) {
         // Double jump
         this.state.velocity.y = -jumpForce * 0.8; // Slightly weaker double jump
         this.state.hasDoubleJumped = true;
+        console.log("Double jump activated!");
       }
     }
 
@@ -113,6 +120,7 @@ export class Player {
     this.state.activePowerUps.clear();
     this.state.canDoubleJump = false;
     this.state.hasDoubleJumped = false;
+    this.previousJumpPressed = false;
   }
 
   private updatePowerUps(deltaTime: number) {

@@ -12,9 +12,11 @@ interface GameUIProps {
   onToggleMute: () => void;
   isMuted: boolean;
   activePowerUps?: string[];
+  onOpenShop?: () => void;
+  totalCoins?: number;
 }
 
-const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMuted, activePowerUps = [] }: GameUIProps) => {
+const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMuted, activePowerUps = [], onOpenShop, totalCoins = 0 }: GameUIProps) => {
   return (
     <>
       {/* Game Stats HUD */}
@@ -33,6 +35,7 @@ const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMute
           <div>Score: {stats.score}</div>
           <div>Lives: {stats.lives}</div>
           <div>Level: {stats.level}</div>
+          <div>Coins: {totalCoins}</div>
         </div>
       )}
 
@@ -146,21 +149,64 @@ const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMute
           <p style={{ fontSize: '18px', margin: '0 0 30px 0' }}>
             Level Reached: {stats.level}
           </p>
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <button
+              onClick={onRestartGame}
+              style={{
+                background: '#F39C12',
+                color: 'white',
+                border: 'none',
+                padding: '15px 30px',
+                fontSize: '20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontFamily: 'Courier New, monospace',
+                boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
+              }}
+            >
+              RESTART GAME
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Death Screen (when lives lost but not game over) */}
+      {stats.lives <= 0 && phase === "playing" && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          color: '#333',
+          fontFamily: 'Courier New, monospace',
+          zIndex: 10,
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '30px',
+          borderRadius: '15px',
+          border: '3px solid #FF6B6B'
+        }}>
+          <h2 style={{ fontSize: '36px', margin: '0 0 15px 0', color: '#FF6B6B' }}>
+            YOU DIED!
+          </h2>
+          <p style={{ fontSize: '18px', margin: '0 0 20px 0' }}>
+            Score: {stats.score} | Level: {stats.level}
+          </p>
           <button
             onClick={onRestartGame}
             style={{
-              background: '#F39C12',
+              background: '#FF6B6B',
               color: 'white',
               border: 'none',
-              padding: '15px 30px',
-              fontSize: '20px',
+              padding: '12px 25px',
+              fontSize: '16px',
               borderRadius: '8px',
               cursor: 'pointer',
               fontFamily: 'Courier New, monospace',
-              boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
+              boxShadow: '3px 3px 6px rgba(0,0,0,0.3)'
             }}
           >
-            PLAY AGAIN
+            RESTART
           </button>
         </div>
       )}
