@@ -36,6 +36,18 @@ const Game = () => {
     };
   }, [start, restart]);
 
+  // Poll for active power-ups
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (gameEngineRef.current && phase === "playing") {
+        const powerUps = gameEngineRef.current.getPlayerActivePowerUps();
+        setActivePowerUps(powerUps);
+      }
+    }, 100); // Update every 100ms
+
+    return () => clearInterval(interval);
+  }, [phase]);
+
   useEffect(() => {
     // Handle background music
     if (backgroundMusic && phase === "playing" && !isMuted) {
@@ -80,6 +92,7 @@ const Game = () => {
         onRestartGame={handleRestartGame}
         onToggleMute={handleToggleMute}
         isMuted={isMuted}
+        activePowerUps={activePowerUps}
       />
     </div>
   );

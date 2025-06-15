@@ -302,6 +302,10 @@ export class GameEngine {
     this.callbacks.onGameEnd();
   }
 
+  public getPlayerActivePowerUps(): string[] {
+    return this.player.getActivePowerUps();
+  }
+
   public destroy() {
     this.isRunning = false;
     this.inputManager.destroy();
