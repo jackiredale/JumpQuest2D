@@ -43,9 +43,12 @@ export class GameEngine {
     };
     
     // Initialize game objects
+    this.levelManager = new LevelManager();
     this.player = new Player(this.spawnPoint.x, this.spawnPoint.y, this.config);
     this.platforms = [];
     this.collectibles = [];
+    this.enemies = [];
+    this.powerUps = [];
     this.inputManager = new InputManager(canvas);
     
     this.initializeLevel();
@@ -59,33 +62,17 @@ export class GameEngine {
   }
 
   private initializeLevel() {
-    // Create platforms for level 1
-    this.platforms = [
-      // Ground platforms
-      new Platform(0, 550, 200, 50),
-      new Platform(250, 550, 200, 50),
-      new Platform(500, 550, 300, 50),
-      
-      // Mid-level platforms
-      new Platform(150, 450, 100, 20),
-      new Platform(300, 350, 120, 20),
-      new Platform(500, 400, 80, 20),
-      new Platform(650, 300, 100, 20),
-      
-      // Upper platforms
-      new Platform(100, 250, 80, 20),
-      new Platform(400, 200, 120, 20),
-      new Platform(600, 150, 100, 20),
-    ];
-
-    // Create collectibles
-    this.collectibles = [
-      new Collectible(175, 420, 1),
-      new Collectible(340, 320, 2),
-      new Collectible(520, 370, 3),
-      new Collectible(680, 270, 4),
-      new Collectible(440, 170, 5),
-    ];
+    const levelData = this.levelManager.getCurrentLevel();
+    const gameObjects = this.levelManager.createGameObjects(levelData);
+    
+    this.platforms = gameObjects.platforms;
+    this.collectibles = gameObjects.collectibles;
+    this.enemies = gameObjects.enemies;
+    this.powerUps = gameObjects.powerUps;
+    this.spawnPoint = levelData.spawnPoint;
+    
+    // Update level number for UI
+    this.level = this.levelManager.getCurrentLevelNumber();
   }
 
   public startGame() {
@@ -99,13 +86,11 @@ export class GameEngine {
     console.log("Restarting game");
     this.isRunning = false;
     this.score = 0;
-    this.level = 1;
+    this.levelManager.resetToLevel(1);
     this.player.reset(this.spawnPoint.x, this.spawnPoint.y);
     
-    // Reset collectibles
-    this.collectibles.forEach(collectible => {
-      collectible.data.collected = false;
-    });
+    // Reset to level 1
+    this.initializeLevel();
     
     this.callbacks.onScoreChange(this.score);
     this.callbacks.onLifeChange(this.player.state.lives);
@@ -134,6 +119,35 @@ export class GameEngine {
     // Update player
     this.player.update(deltaTime, leftPressed, rightPressed, jumpPressed);
 
+    // Update enemies
+    this.enemies.forEach(enemy => {
+      enemy.update(deltaTime, this.config.gravity);
+      
+      // Check enemy-platform collisions
+      const enemyRect = enemy.getRect();
+      for (const platform of this.platforms) {
+        const platformRect = platform.getRect();
+        
+        if (Physics.checkAABBCollision(enemyRect, platformRect)) {
+          const collision = Physics.resolveCollision(
+            enemyRect,
+            platformRect,
+            enemy.data.velocity
+          );
+          
+          enemy.data.position.x = collision.position.x;
+          enemy.data.position.y = collision.position.y;
+          enemy.data.velocity.x = collision.velocity.x;
+          enemy.data.velocity.y = collision.velocity.y;
+        }
+      }
+      
+      // Keep enemies within screen bounds
+      if (enemy.data.position.y > this.canvas.height) {
+        enemy.data.active = false;
+      }
+    });
+
     // Check platform collisions
     const playerRect = this.player.getRect();
     for (const platform of this.platforms) {
@@ -152,6 +166,35 @@ export class GameEngine {
       }
     }
 
+    // Check enemy collisions
+    this.enemies.forEach(enemy => {
+      if (enemy.isActive()) {
+        const enemyRect = enemy.getRect();
+        if (Physics.checkAABBCollision(playerRect, enemyRect)) {
+          if (this.player.hasShield()) {
+            // Player has shield - destroy enemy
+            enemy.takeDamage();
+            this.score += 50;
+            this.callbacks.onScoreChange(this.score);
+            console.log("Enemy destroyed with shield!");
+          } else {
+            // Player takes damage
+            this.player.loseLife();
+            this.callbacks.onLifeChange(this.player.state.lives);
+            
+            if (this.player.isDead()) {
+              this.endGame();
+            } else {
+              // Respawn player
+              this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+              this.player.setVelocity(0, 0);
+            }
+            console.log("Player hit by enemy!");
+          }
+        }
+      }
+    });
+
     // Check collectible collisions
     this.collectibles.forEach(collectible => {
       if (!collectible.isCollected()) {
@@ -160,11 +203,24 @@ export class GameEngine {
           collectible.collect();
           this.score += 100;
           this.callbacks.onScoreChange(this.score);
-          
-          // Play success sound (handled by audio store)
           console.log("Collectible collected!");
         }
         collectible.update(deltaTime);
+      }
+    });
+
+    // Check power-up collisions
+    this.powerUps.forEach(powerUp => {
+      if (!powerUp.isCollected()) {
+        const powerUpRect = powerUp.getRect();
+        if (Physics.checkAABBCollision(playerRect, powerUpRect)) {
+          powerUp.collect();
+          this.player.addPowerUp(powerUp.data.type, powerUp.data.duration);
+          this.score += 200;
+          this.callbacks.onScoreChange(this.score);
+          console.log(`Power-up collected: ${powerUp.data.type}`);
+        }
+        powerUp.update(deltaTime);
       }
     });
 
@@ -199,8 +255,9 @@ export class GameEngine {
   }
 
   private render() {
-    // Clear canvas with sky blue background
-    this.ctx.fillStyle = '#87CEEB';
+    // Clear canvas with level background color
+    const levelData = this.levelManager.getCurrentLevel();
+    this.ctx.fillStyle = levelData.backgroundColor;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Render platforms
@@ -209,24 +266,34 @@ export class GameEngine {
     // Render collectibles
     this.collectibles.forEach(collectible => collectible.render(this.ctx));
 
+    // Render power-ups
+    this.powerUps.forEach(powerUp => powerUp.render(this.ctx));
+
+    // Render enemies
+    this.enemies.forEach(enemy => enemy.render(this.ctx));
+
     // Render player
     this.player.render(this.ctx);
   }
 
   private nextLevel() {
-    this.level++;
-    this.callbacks.onLevelChange(this.level);
+    const hasNextLevel = this.levelManager.nextLevel();
     
-    // Reset collectibles for next level
-    this.collectibles.forEach(collectible => {
-      collectible.data.collected = false;
-    });
-    
-    // Reset player position
-    this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
-    this.player.setVelocity(0, 0);
-    
-    console.log(`Level ${this.level} started!`);
+    if (hasNextLevel) {
+      // Load new level
+      this.initializeLevel();
+      
+      // Reset player position
+      this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+      this.player.setVelocity(0, 0);
+      
+      this.callbacks.onLevelChange(this.level);
+      console.log(`Level ${this.level} started: ${this.levelManager.getCurrentLevel().name}`);
+    } else {
+      // Game completed!
+      console.log("All levels completed!");
+      this.endGame();
+    }
   }
 
   private endGame() {

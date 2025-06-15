@@ -15,6 +15,7 @@ const Game = () => {
     lives: 3,
     level: 1
   });
+  const [activePowerUps, setActivePowerUps] = useState<string[]>([]);
 
   useEffect(() => {
     if (canvasRef.current && !gameEngineRef.current) {

@@ -11,9 +11,10 @@ interface GameUIProps {
   onRestartGame: () => void;
   onToggleMute: () => void;
   isMuted: boolean;
+  activePowerUps?: string[];
 }
 
-const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMuted }: GameUIProps) => {
+const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMuted, activePowerUps = [] }: GameUIProps) => {
   return (
     <>
       {/* Game Stats HUD */}
@@ -32,6 +33,37 @@ const GameUI = ({ phase, stats, onStartGame, onRestartGame, onToggleMute, isMute
           <div>Score: {stats.score}</div>
           <div>Lives: {stats.lives}</div>
           <div>Level: {stats.level}</div>
+        </div>
+      )}
+
+      {/* Power-ups Display */}
+      {phase === "playing" && activePowerUps.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '120px',
+          left: '20px',
+          color: '#333',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          textShadow: '2px 2px 4px rgba(255,255,255,0.8)',
+          zIndex: 10
+        }}>
+          <div style={{ marginBottom: '5px' }}>Active Power-ups:</div>
+          {activePowerUps.map((powerUp, index) => (
+            <div key={index} style={{
+              background: 'rgba(255, 255, 255, 0.8)',
+              padding: '2px 8px',
+              margin: '2px 0',
+              borderRadius: '3px',
+              border: '1px solid #333'
+            }}>
+              {powerUp === 'speed' && '🏃 Speed Boost'}
+              {powerUp === 'jump' && '🦘 Jump Boost'}
+              {powerUp === 'shield' && '🛡️ Shield'}
+              {powerUp === 'double_jump' && '↕️ Double Jump'}
+            </div>
+          ))}
         </div>
       )}
 
